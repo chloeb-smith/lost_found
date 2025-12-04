@@ -33,8 +33,12 @@ def login():
 
         db = get_db()
         cur = db.cursor()
-        query = f"SELECT username, role FROM users WHERE username = '{uname}' AND password = '{pwd}'"
-        cur.execute(query)
+
+        cur.execute(
+            "SELECT username, role FROM users WHERE username=? AND password=?",
+            (uname, pwd)
+        )
+
         row = cur.fetchone()
         if row:
             session['user'] = row[0]

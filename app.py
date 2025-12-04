@@ -136,15 +136,35 @@ def found_return(item_id):
 def search():
     if 'user' not in session:
         return redirect(url_for('login'))
+
     results = []
     q = ''
+
     if request.method == 'POST':
-        q = request.form.get('q', '')
+        q = request.form.get('q', '').strip()
+
+        # Limit length 
+        q = q[:200]
+
+        # Escape SQL wildcard chars so users cannot manipulate LIKE behavior
+        q = q.replace('%', r'\%').replace('_', r'\_')
+
         db = get_db()
         cur = db.cursor()
-        sql = f"SELECT id, title, description FROM found_items WHERE description LIKE '%{q}%' OR title LIKE '%{q}%'"
-        cur.execute(sql)
+
+        # Parameterized query 
+        sql = """
+            SELECT id, title, description
+            FROM found_items
+            WHERE description LIKE ? ESCAPE '\\'
+               OR title LIKE ? ESCAPE '\\'
+        """
+
+        like_value = f"%{q}%"
+        cur.execute(sql, (like_value, like_value))
+
         results = cur.fetchall()
+
     return render_template('search.html', results=results, q=q)
 
 # File access

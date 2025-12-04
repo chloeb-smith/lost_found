@@ -76,12 +76,15 @@ def lost_new():
         image = request.files.get('image')
         filename = None
         if image:
-            filename = image.filename
+            filename = secure_filename(image.filename)
             path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             image.save(path)
         db = get_db()
         cur = db.cursor()
-        cur.execute(f"INSERT INTO lost_items (owner, title, description, image) VALUES ('{session['user']}', '{title}', '{desc}', '{filename}')")
+        cur.execute(
+            "INSERT INTO lost_items (owner, title, description, image) VALUES (?, ?, ?, ?)",
+            (session['user'], title, desc, filename)
+        )
         db.commit()
         return redirect(url_for('lost_list'))
     return render_template('lost_new.html')
